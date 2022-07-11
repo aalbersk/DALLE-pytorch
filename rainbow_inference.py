@@ -14,7 +14,7 @@ from PIL import Image
 from torchvision.utils import save_image
 
 INFERENCE_CAPTION = 'big filled rainbow square'
-NUM_IMAGES = 512
+NUM_IMAGES = 128
 BATCH_SIZE = 128
 IF_SAVED_IMAGES = False
 
@@ -34,7 +34,8 @@ if __name__ == '__main__':
         temperature = 0.9,       # gumbel softmax temperature, the lower this is, the harder the discretization
         straight_through = False # straight-through for gumbel softmax. unclear if it is better one way or the other
     ).to(device)
-    vae.load_state_dict(torch.load(vae_model_file))
+    loaded_vae = torch.load(vae_model_file) if torch.cuda.is_available() else torch.load(vae_model_file, map_location=torch.device('cpu'))
+    vae.load_state_dict(loaded_vae)
 
     dalle_model_file = 'examples/data/rainbow_dalle.model'
     dalle = DALLE(
@@ -48,7 +49,8 @@ if __name__ == '__main__':
         attn_dropout = 0.1,         # attention dropout
         ff_dropout = 0.1            # feedforward dropout
     ).to(device)
-    dalle.load_state_dict(torch.load(dalle_model_file))
+    loaded_dalle = torch.load(dalle_model_file) if torch.cuda.is_available() else torch.load(dalle_model_file, map_location=torch.device('cpu'))
+    dalle.load_state_dict(loaded_dalle)
 
 
     inference_caption_words = INFERENCE_CAPTION.split()
@@ -76,16 +78,18 @@ if __name__ == '__main__':
 
     generated_images = []
     latency_list = []
-    for x in range(int(NUM_IMAGES/BATCH_SIZE)):
+    interations_num = 5
+    for x in range(interations_num):
+        print(f'Iteration no. {x}')
         tick = time.perf_counter()
 
-    with torch.no_grad():
-        for text_chunk in tqdm(inference_caption_array.split(BATCH_SIZE), desc = f'generating images for - {INFERENCE_CAPTION}'):
-            generated = dalle.generate_images(inference_caption_array, temperature=0.00001)
-            generated_images.append(generated)
+        with torch.no_grad():
+            for text_chunk in inference_caption_array:
+                generated = dalle.generate_images(inference_caption_array, temperature=0.00001)
+                generated_images.append(generated)
 
-    latency_time = time.perf_counter() - tick
-    latency_list.append(latency_time)
+        latency_time = time.perf_counter() - tick
+        latency_list.append(latency_time)
 
     P50_latency = np.percentile(np.array(latency_list), 50) * 1000
     P90_latency = np.percentile(np.array(latency_list), 90) * 1000
