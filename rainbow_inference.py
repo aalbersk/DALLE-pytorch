@@ -14,9 +14,10 @@ from PIL import Image
 from torchvision.utils import save_image
 
 INFERENCE_CAPTION = 'big filled rainbow square'
-NUM_IMAGES = 128
-BATCH_SIZE = 128
+NUM_IMAGES = 1
+BATCH_SIZE = NUM_IMAGES
 IF_SAVED_IMAGES = False
+ITERATIONS_NUM = 100
 
 if __name__ == '__main__':
     print('You need to run examples/rainbow_dalle.ipynb to train the models and receive all available caption name.')
@@ -78,8 +79,7 @@ if __name__ == '__main__':
 
     generated_images = []
     latency_list = []
-    interations_num = 5
-    for x in range(interations_num):
+    for x in range(ITERATIONS_NUM):
         print(f'Iteration no. {x}')
         tick = time.perf_counter()
 
@@ -91,13 +91,14 @@ if __name__ == '__main__':
         latency_time = time.perf_counter() - tick
         latency_list.append(latency_time)
 
-    P50_latency = np.percentile(np.array(latency_list), 50) * 1000
-    P90_latency = np.percentile(np.array(latency_list), 90) * 1000
+    P50_latency = np.percentile(np.array(latency_list), 50)
+    P90_latency = np.percentile(np.array(latency_list), 90)
     avg_latency = np.average(np.array(latency_list))
-    throughput = BATCH_SIZE / avg_latency
+    throughput = NUM_IMAGES / avg_latency
 
     print(f'Batch size: {BATCH_SIZE}')
     print(f'Number of images: {NUM_IMAGES}')
+    print(f'Latency list: {latency_list} [in sec]')
     print(f'P50 latency: {round(P50_latency, 4)} sec')
     print(f'P90 latency: {round(P90_latency, 4)} sec')
     print(f'Average latency: {round(avg_latency, 4)} sec')
