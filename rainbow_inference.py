@@ -24,7 +24,7 @@ if __name__ == '__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(device)
 
-    vae_model_file = 'examples/data/rainbow_vae.model'
+    vae_model_file = '../rainbow_vae.model'
     vae = DiscreteVAE(
         image_size = 32,
         num_layers = 3,          # number of downsamples - ex. 256 / (2 ** 3) = (32 x 32 feature map)
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     loaded_vae = torch.load(vae_model_file) if torch.cuda.is_available() else torch.load(vae_model_file, map_location=torch.device('cpu'))
     vae.load_state_dict(loaded_vae)
 
-    dalle_model_file = 'examples/data/rainbow_dalle.model'
+    dalle_model_file = '../rainbow_dalle.model'
     dalle = DALLE(
         dim = 1024,
         vae = vae,                  # automatically infer (1) image sequence length and (2) number of image tokens
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     print(f'P50 latency: {round(P50_latency, 4)} sec')
     print(f'P90 latency: {round(P90_latency, 4)} sec')
     print(f'Average latency: {round(avg_latency, 4)} sec')
-    print(f'Throughput: {round(throughput, 4)} sec')
+    print(f'Throughput: {round(throughput, 4)} images/sec')
 
     if IF_SAVED_IMAGES:
         generated_images = torch.cat(generated_images)
